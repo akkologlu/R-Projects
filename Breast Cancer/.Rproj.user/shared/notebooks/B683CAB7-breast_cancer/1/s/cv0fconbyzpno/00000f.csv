@@ -1,0 +1,4 @@
+"0",""
+"0","cancer_data$id <- NULL"
+"0","cancer_data$X <- NULL"
+"0","cancer_data <- na.omit(cancer_data)"

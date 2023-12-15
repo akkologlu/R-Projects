@@ -1,0 +1,4 @@
+"0","set.seed(123)"
+"0","ind<-sample(2,nrow(cancer_data),replace=T,prob = c(0.7,0.3))"
+"0","train<-cancer_data[ind==1,]"
+"0","test<-cancer_data[ind==2,]"

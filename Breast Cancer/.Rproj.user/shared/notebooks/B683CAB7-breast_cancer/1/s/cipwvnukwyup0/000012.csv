@@ -1,0 +1,2 @@
+"0","pc<-cor(cancer_data[,2:31])"
+"0","corrplot(pc)"

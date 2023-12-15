@@ -1,0 +1,100 @@
+---
+title: "HOMEWORK - PCA with LOGISTIC REGRESSION - Abdullah Akkoloğlu"
+output: html_document
+date: "2023-12-02"
+---
+```{r}
+options(repos = c(CRAN = "https://cran.r-project.org"))
+
+install.packages("corrplot")
+library(corrplot)
+```
+
+PART 1
+
+A) Read the data-set as a data frame.
+```{r}
+cancer_data <- read.csv("data.csv")
+```
+
+B) Check whether your data types are correct or not by using str (structure) function.
+```{r}
+str(cancer_data)
+```
+
+C) Search whether any null values exist in the data-set.
+```{r}
+
+cancer_data$id <- NULL
+cancer_data$X <- NULL
+cancer_data <- na.omit(cancer_data)
+```
+
+Tranlating diagnosis symbols to 1 and 0:
+```{r}
+cancer_data$diagnosis <- ifelse(cancer_data$diagnosis == "M", 1, 0)
+```
+
+D) Look at the correlation between the columns using the corrplot function in corrplot library
+```{r}
+pc<-cor(cancer_data[,2:31])
+corrplot(pc)
+```
+
+E) Discuss about multicollinearity:
+We can see multicollinearity in many places here. There is a multicollinearity between the trio of radius, perimeter and area. This situation is also present in the mean, se and worst versions.
+
+PART 2
+
+A) Split your data into train and test data.
+```{r}
+set.seed(123)
+ind<-sample(2,nrow(cancer_data),replace=T,prob = c(0.7,0.3))
+train<-cancer_data[ind==1,]
+test<-cancer_data[ind==2,]
+```
+
+B) Use logistic regression in order to build a logistic model using glm function.
+```{r}
+fit<-glm(diagnosis~.,family=binomial,train)
+summary(fit)
+```
+C) Discuss about the summary of your model:
+In the summary of the model, all p values were very close to 1. High p values indicate that it is not statistically significant.
+
+D) Use predict function and then get the confusion matrıx:
+```{r}
+predictions <- predict(fit, newdata = test, type = "response")
+predicted_classes <- ifelse(predictions > 0.5, 1, 0)
+conf_matrix <- table(Actual = test$diagnosis, Predicted = predicted_classes)
+conf_matrix
+```
+
+E) Discuss about the performance measures:
+True Positive (TP) = 64
+True Negative (TN) = 82
+False Positive (FP) = 12
+False Negative (FN) = 6
+
+Accuracy = 146/164 = 0.8902
+Precision = 64/76 = 0.8421
+Recall = 64/70 = 0.9143
+Specificity = 82/94=0.8723
+
+The model has an overall accuracy of approximately 89%, indicating the proportion of correctly classified instances among all instances.
+About 84% of the instances predicted as positive by the model are actually positive.
+The model captures approximately 91% of the actual positive instances.
+The model has a specificity of around 87%, suggesting that it correctly identifies the negative instances.
+
+PART 3:
+A) Apply PCA choose your PC’s (explain the reason).
+
+```{r}
+pca_predictors <- cancer_data[, -which(names(cancer_data) == "diagnosis")]
+scaled_data <- scale(pca_predictors)
+pca_result <- prcomp(scaled_data, center = TRUE, scale. = TRUE)
+summary(pca_result)
+```
+Here I decide to choose the top 10 PCs that can represent 95 percent of the model. I think this level of representation will be sufficient.
+
+Since I could not get out of the mistakes and confusion I received in the rest of the assignment, I regretfully decided not to send the remaining part due to the extremely inconsistent and meaningless results.

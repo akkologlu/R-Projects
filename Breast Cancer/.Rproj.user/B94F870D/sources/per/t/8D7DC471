@@ -1,0 +1,28 @@
+{
+    "id": "8D7DC471",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1701552153679.0,
+    "source_on_save": false,
+    "relative_order": 4,
+    "properties": {
+        "id": "e18de7af4a4140c98173faa55feb54c0",
+        "name": "fit",
+        "title": "fit",
+        "language": "R",
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 2321511860144,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1701552153679,
+    "read_only": false,
+    "read_only_alternatives": []
+}

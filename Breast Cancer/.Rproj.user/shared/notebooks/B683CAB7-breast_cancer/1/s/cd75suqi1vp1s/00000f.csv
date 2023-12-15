@@ -1,0 +1,1 @@
+"0","cancer_data$diagnosis <- ifelse(cancer_data$diagnosis == ""M"", 1, 0)"
