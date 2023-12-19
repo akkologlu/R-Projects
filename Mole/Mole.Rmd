@@ -1,0 +1,73 @@
+---
+title: "Mole"
+author: "Abdullah Akkoloğlu"
+date: "2023-12-18"
+output: html_document
+---
+
+```{r}
+# Set the CRAN mirror
+options(repos = c(CRAN = "https://cran.r-project.org"))
+
+# Install the packages
+install.packages("caret")
+install.packages("skimr")
+
+# Load the libraries
+library(caret)
+library(skimr)
+library(RANN)
+```
+Read the data.
+```{r}
+mole <- read.csv("mole2_dataset.csv")
+```
+
+1.Split your data into train (80%) and test (20%) datasets using caret’s createDataPartition function.
+```{r}
+set.seed(100)
+trainRowNumbers <- createDataPartition(mole$diagnosis, p=0.8, list=FALSE)
+trainData <- mole[trainRowNumbers,]
+testData <- mole[-trainRowNumbers,]
+```
+
+2 Use the skim_to_wide function in skimr package, and provide descriptive stats for each column. Comment!
+```{r}
+skimmed <- skim_to_wide(trainData)
+skimmed
+```
+
+3 Predict and impute the missing values with k-Nearest Neighbors using preProcess function in caret. Comment!
+```{r}
+preProcess_missingdata_model <- preProcess(trainData, method='knnImpute')
+preProcess_missingdata_model
+trainData <- predict(preProcess_missingdata_model, newdata = trainData)
+```
+
+4. After you impute missing values, use variable transformations. Convert all the numeric variables to range between 0 and 1, by setting method=range in preProcess function.
+```{r}
+preProcess_range_model <- preProcess(trainData, method='range')
+trainData <- predict(preProcess_range_model, newdata = trainData)
+```
+
+5. Use caret’s featurePlot() function to visually examine how the predictors influence the predictor variable. Comment!
+basel cell carcinoma - melanoma - nevus - seborrheic keratosis
+```{r}
+trainData$diagnosis <- as.factor(trainData$diagnosis)
+featurePlot(x = trainData[, 6:13], 
+            y = trainData$diagnosis, 
+            plot = "box",
+            strip=strip.custom(par.strip.text=list(cex=.7)),
+            scales = list(x = list(relation="free"), 
+                          y = list(relation="free")))
+```
+
+
+
+
+
+
+
+
+
+
