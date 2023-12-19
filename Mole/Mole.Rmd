@@ -2,9 +2,12 @@
 title: "Mole"
 author: "Abdullah Akkoloğlu"
 date: "2023-12-18"
+warning: FALSE
 output: html_document
 ---
-
+```{r}
+knitr::opts_chunk$set(warning = FALSE)
+```
 ```{r}
 # Set the CRAN mirror
 options(repos = c(CRAN = "https://cran.r-project.org"))
@@ -12,62 +15,160 @@ options(repos = c(CRAN = "https://cran.r-project.org"))
 # Install the packages
 install.packages("caret")
 install.packages("skimr")
+install.packages("klaR")
 
 # Load the libraries
 library(caret)
 library(skimr)
 library(RANN)
+library(class)
+library(dplyr)
+library(randomForest)
+library(klaR)
 ```
-Read the data.
+
 ```{r}
 mole <- read.csv("mole2_dataset.csv")
 ```
 
-1.Split your data into train (80%) and test (20%) datasets using caret’s createDataPartition function.
+# 1.Split your data into train (80%) and test (20%) datasets using caret’s createDataPartition function.
 ```{r}
-set.seed(100)
+set.seed(1881)
 trainRowNumbers <- createDataPartition(mole$diagnosis, p=0.8, list=FALSE)
 trainData <- mole[trainRowNumbers,]
 testData <- mole[-trainRowNumbers,]
 ```
 
-2 Use the skim_to_wide function in skimr package, and provide descriptive stats for each column. Comment!
+# 2 Use the skim_to_wide function in skimr package, and provide descriptive stats for each column. Comment!
 ```{r}
 skimmed <- skim_to_wide(trainData)
 skimmed
 ```
 
-3 Predict and impute the missing values with k-Nearest Neighbors using preProcess function in caret. Comment!
+# 3 Predict and impute the missing values with k-Nearest Neighbors using preProcess function in caret. Comment!
 ```{r}
 preProcess_missingdata_model <- preProcess(trainData, method='knnImpute')
 preProcess_missingdata_model
+```
+It has centered (subtract by mean) 11 variables, ignored 3, used k=5 (considered 5 nearest neighbors) to predict the missing 11 values and finally scaled (divide by standard deviation) 11 variables.
+```{r}
 trainData <- predict(preProcess_missingdata_model, newdata = trainData)
 ```
 
-4. After you impute missing values, use variable transformations. Convert all the numeric variables to range between 0 and 1, by setting method=range in preProcess function.
+# 4. After you impute missing values, use variable transformations. Convert all the numeric variables to range between 0 and 1, by setting method=range in preProcess function.
 ```{r}
 preProcess_range_model <- preProcess(trainData, method='range')
 trainData <- predict(preProcess_range_model, newdata = trainData)
 ```
 
-5. Use caret’s featurePlot() function to visually examine how the predictors influence the predictor variable. Comment!
-basel cell carcinoma - melanoma - nevus - seborrheic keratosis
+# 5. Use caret’s featurePlot() function to visually examine how the predictors influence the predictor variable. Comment!
+
 ```{r}
+trainData$sex <- ifelse(trainData$sex == "male", 0, 1)
+testData$sex <- ifelse(testData$sex == "male", 0, 1)
 trainData$diagnosis <- as.factor(trainData$diagnosis)
-featurePlot(x = trainData[, 6:13], 
+featurePlot(x = trainData[, 3:13], 
             y = trainData$diagnosis, 
             plot = "box",
             strip=strip.custom(par.strip.text=list(cex=.7)),
             scales = list(x = list(relation="free"), 
                           y = list(relation="free")))
+
 ```
 
+Boxes represents in order: basel cell carcinoma - melanoma - nevus - seborrheic keratosis. The black dot in the box represents mean. The blue box shows the part where the data is dense. It also shows the data that is left out in the lines outside the box. The different the height and placement of the boxes, the more different their effects on the y variable will be. As a result, there is a visible difference in all numeric variables except the "corners" variable. Some differences are from blue box sources and some are from mean sources.
 
+# 6. 
 
+## a. Use train() function to build the machine learning model. Choose knn algorithm.
+```{r}
 
+testData2 <- predict(preProcess_missingdata_model, testData)
+testData4 <- predict(preProcess_range_model, testData2)
+#I remove the second colon because of some errors which includes ID of the rows.  First I tried the solve it but I can't then it does not effect the data so I remove it.
+trainData <- trainData[, -2]
+testData4 <- testData4[, -2]
+set.seed(101)
+knn_model <- train(
+   diagnosis ~ .,
+   data = trainData,
+   method = "knn"
+)
+```
+## b. Make predictions for test data using the predict() function.
+```{r}
+predictKnn <- predict(knn_model, newdata = testData4)
+testData4$diagnosis <- as.factor(testData4$diagnosis)
+predictKnn <- as.factor(predictKnn)
+levels_test <- levels(testData4$diagnosis)
+levels_predict <- levels(predictKnn)
+if (!identical(levels_test, levels_predict)) {
+   predictKnn <- factor(predictKnn, levels = levels_test)
+}
+```
+## c. Construct the confusion matrix to compare the predictions (data) vs the actuals (reference). 
+```{r}
+matrixKnn <- confusionMatrix(predictKnn, testData4$diagnosis)
+print(matrixKnn)
+```
 
+# 7. 
 
+## a. Use train() function to build the machine learning model. Choose random forest algorithm.
+```{r}
+set.seed(101)
+rf_model <- train(
+   diagnosis ~ .,
+   data = trainData,
+   method = "rf"
+)
+```
+## b. Make predictions for test data using the predict() function.
+```{r}
+predictRf <- predict(rf_model, newdata = testData4)
+testData4$diagnosis <- as.factor(testData4$diagnosis)
+predictRf <- as.factor(predictRf)
+levels_test <- levels(testData4$diagnosis)
+levels_predict <- levels(predictRf)
+if (!identical(levels_test, levels_predict)) {
+   predictRf <- factor(predictRf, levels = levels_test)
+}
+```
+## c. Construct the confusion matrix to compare the predictions (data) vs the actuals (reference). 
+```{r}
+matrixRf <- confusionMatrix(predictRf, testData4$diagnosis)
+print(matrixRf)
+```
 
+# 8. 
 
-
-
+## a. Use train() function to build the machine learning model. Choose naïve bayes classification algorithm.
+```{r}
+set.seed(101)
+nb_model <- train(
+   diagnosis ~ .,
+   data = trainData,
+   method = "nb"
+)
+```
+## b. Make predictions for test data using the predict() function.
+```{r}
+predictNb <- predict(nb_model, newdata = testData4)
+testData4$diagnosis <- as.factor(testData4$diagnosis)
+predictNb <- as.factor(predictNb)
+levels_test <- levels(testData4$diagnosis)
+levels_predict <- levels(predictNb)
+if (!identical(levels_test, levels_predict)) {
+   predictNb <- factor(predictNb, levels = levels_test)
+}
+```
+## c. Construct the confusion matrix to compare the predictions (data) vs the actuals (reference). 
+```{r}
+matrixNb <- confusionMatrix(predictNb, testData4$diagnosis)
+print(matrixNb)
+```
+# 9. Compare and make more and more comments about the final results you find in steps “6-8”.
+Random Forest achieved the highest accuracy among the three algorithms.
+Random Forest and K-Nearest Neighbors performed reasonably well on Melanoma and Nevus classes.
+Naïve Bayes showed good specificity but lower sensitivity, especially for Basal Cell Carcinoma and Nevus.
+In summary, Random Forest appears to be the most promising algorithm in this context.
