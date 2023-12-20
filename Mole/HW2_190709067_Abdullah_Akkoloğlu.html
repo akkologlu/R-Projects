@@ -368,21 +368,21 @@ install.packages(&quot;caret&quot;)</code></pre>
 <pre><code>## package &#39;caret&#39; successfully unpacked and MD5 sums checked
 ## 
 ## The downloaded binary packages are in
-##  C:\Users\abdul\AppData\Local\Temp\RtmpC0x7xP\downloaded_packages</code></pre>
+##  C:\Users\abdul\AppData\Local\Temp\Rtmp8IMZXb\downloaded_packages</code></pre>
 <pre class="r"><code>install.packages(&quot;skimr&quot;)</code></pre>
 <pre><code>## Installing package into &#39;C:/Users/abdul/AppData/Local/R/win-library/4.3&#39;
 ## (as &#39;lib&#39; is unspecified)</code></pre>
 <pre><code>## package &#39;skimr&#39; successfully unpacked and MD5 sums checked
 ## 
 ## The downloaded binary packages are in
-##  C:\Users\abdul\AppData\Local\Temp\RtmpC0x7xP\downloaded_packages</code></pre>
+##  C:\Users\abdul\AppData\Local\Temp\Rtmp8IMZXb\downloaded_packages</code></pre>
 <pre class="r"><code>install.packages(&quot;klaR&quot;)</code></pre>
 <pre><code>## Installing package into &#39;C:/Users/abdul/AppData/Local/R/win-library/4.3&#39;
 ## (as &#39;lib&#39; is unspecified)</code></pre>
 <pre><code>## package &#39;klaR&#39; successfully unpacked and MD5 sums checked
 ## 
 ## The downloaded binary packages are in
-##  C:\Users\abdul\AppData\Local\Temp\RtmpC0x7xP\downloaded_packages</code></pre>
+##  C:\Users\abdul\AppData\Local\Temp\Rtmp8IMZXb\downloaded_packages</code></pre>
 <pre class="r"><code># Load the libraries
 library(caret)</code></pre>
 <pre><code>## Zorunlu paket yükleniyor: ggplot2</code></pre>
@@ -705,6 +705,13 @@ skimmed</code></pre>
 </tr>
 </tbody>
 </table>
+<p>The skim_to_wide function shows us statistics related to our data. It
+separates our data into character and numeric. We have 11 numeric and 3
+character type variables. We can also see the number of missing data if
+there are any. For example, I have 211 NA values in the
+clin_size_long_diam_mm column. I can also see what percentage of the
+column is filled from the complete_rate section. I see it’s only 34% for
+this column. Also, my red, green and blue values have NA values.</p>
 </div>
 <div id="predict-and-impute-the-missing-values-with-k-nearest-neighbors-using-preprocess-function-in-caret.-comment" class="section level1">
 <h1>3 Predict and impute the missing values with k-Nearest Neighbors

@@ -45,6 +45,8 @@ skimmed <- skim_to_wide(trainData)
 skimmed
 ```
 
+The skim_to_wide function shows us statistics related to our data. It separates our data into character and numeric. We have 11 numeric and 3 character type variables. We can also see the number of missing data if there are any. For example, I have 211 NA values in the clin_size_long_diam_mm column. I can also see what percentage of the column is filled from the complete_rate section. I see it's only 34% for this column. Also, my red, green and blue values have NA values.
+
 # 3 Predict and impute the missing values with k-Nearest Neighbors using preProcess function in caret. Comment!
 ```{r}
 preProcess_missingdata_model <- preProcess(trainData, method='knnImpute')
