@@ -1,0 +1,122 @@
+---
+title: "FinalProject"
+author: "Abdullah Akkoloğlu"
+date: "2024-01-10"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+
+```{r}
+# Set the CRAN mirror
+options(repos = c(CRAN = "https://cran.r-project.org"))
+install.packages("caret")
+install.packages("ggcorrplot")
+install.packages("corrr")
+library('corrr')
+library(ggcorrplot)
+library(caret)
+# 1. (5p) Please find your original dataset or datasets; and describe your data in the first step.
+rawData <- read.csv("nba.csv")
+set.seed(123)
+# 2. (4p) Use “Exploratory data analysis”. Write down your comments.
+head(rawData)
+summary(rawData)
+# 3. (4p) Use some “visualization techniques” and talk about your data further.
+install.packages("ggplot2")
+library(ggplot2)
+ggplot(rawData, aes(x=PTS)) + geom_histogram()
+ggplot(rawData, aes(x=MIN, y=PTS)) + geom_point()
+ggplot(rawData, aes(x=factor(TARGET_5Yrs))) + geom_bar()
+
+
+data <- rawData[, -which(names(rawData) == "Name")]
+sum(is.na(data))
+preProcess_missingdata_model <- preProcess(data, method='knnImpute')
+preProcess_missingdata_model
+data <- predict(preProcess_missingdata_model, newdata = data)
+sum(is.na(data))
+data$TARGET_5Yrs <- ifelse(data$TARGET_5Yrs < 0, 0,
+                                   ifelse(data$TARGET_5Yrs > 0, 1,
+                                          data$TARGET_5Yrs))
+# (4p) Check your data for multicollinearity, make your comments.
+independent_vars <- data[, names(data) != "TARGET_5Yrs"]
+data_scaled <- scale(independent_vars)
+data_scaled <- data.frame(data_scaled, target = data$TARGET_5Yrs)
+
+cor_matrix <- cor(data_scaled)
+corrplot(cor_matrix)
+
+
+options(repos = c(CRAN = "https://cran.r-project.org"))
+rawData <- read.csv("nba.csv")
+head(rawData)
+summary(rawData)
+sum(is.na(rawData))
+data_clean <- na.omit(rawData)
+sum(is.na(data_clean))
+install.packages("ggplot2")
+library(ggplot2)
+ggplot(rawData, aes(x=PTS)) + geom_histogram()
+ggplot(rawData, aes(x=MIN, y=PTS)) + geom_point()
+ggplot(rawData, aes(x=factor(TARGET_5Yrs))) + geom_bar()
+install.packages("corrplot")
+library(corrplot)
+cor_matrix <- cor(data_clean)
+corrplot(cor_matrix)
+
+independent_vars <- data_clean[, names(data_clean) != "TARGET_5Yrs"]
+data_scaled <- scale(independent_vars)
+data_scaled <- data.frame(data_scaled, target = data_clean$TARGET_5Yrs)
+
+#PCA:
+
+pca_result <- princomp(data_scaled, cor = TRUE)
+summary(pca_result)
+fviz_eig(data.pca, addlabels = TRUE)
+fviz_pca_var(data.pca, col.var = "black")
+
+#LOG REG WITH PCA:
+
+pcadata <- pca_result$scores[,1:8]
+pcadata  <- as.data.frame(pcadata)
+pcadata$target <- data_scaled$target
+cor_matrix_pca <- cor(pcadata)
+corrplot(cor_matrix_pca)
+ind<-sample(2,nrow(pcadata),replace=T,prob = c(0.7,0.3))
+train_pca<-pcadata[ind==1,]
+test_pca<-pcadata[ind==2,]
+fit_pca<-glm(target~.,family=binomial,train_pca)
+train_pca$probs<-predict(fit_pca, type = 'response')
+train_pca$predict<-rep('0',912)
+train_pca$predict[train_pca$probs>0.5]<-"1"
+table(train_pca$predict,train_pca$target)
+
+
+test_pca$prob<-predict(fit_pca,newdata = test_pca, type = 'response')
+test_pca$predict<-rep('0',417)
+test_pca$predict[test_pca$prob>0.5]<-"1"
+table(test_pca$predict,test_pca$target)
+
+#LOG REG ORIGINAL:
+
+ind<-sample(2,nrow(data_scaled),replace=T,prob = c(0.7,0.3))
+train<-data_scaled[ind==1,]
+test<-data_scaled[ind==2,]
+fit<-glm(target~.,family=binomial,train)
+train$probs<-predict(fit, type = 'response')
+train$predict<-rep('0',945)
+train$predict[train$probs>0.5]<-"1"
+table(train$predict,train$target)
+
+fit<-glm(target~.,family=binomial,test)
+test$probs<-predict(fit, type = 'response')
+test$predict<-rep('0',395)
+test$predict[test$probs>0.5]<-"1"
+table(test$predict,test$target)
+
+```
+

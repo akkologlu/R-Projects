@@ -61,6 +61,7 @@ trainData <- predict(preProcess_missingdata_model, newdata = trainData)
 ```{r}
 preProcess_range_model <- preProcess(trainData, method='range')
 trainData <- predict(preProcess_range_model, newdata = trainData)
+View(trainData)
 ```
 
 # 5. Use caret’s featurePlot() function to visually examine how the predictors influence the predictor variable. Comment!

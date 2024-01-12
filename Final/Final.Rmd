@@ -1,0 +1,153 @@
+---
+title: "Final"
+author: "Abdullah Akkoloğlu"
+date: "2024-01-12"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+```{r}
+# Set the CRAN mirror
+options(repos = c(CRAN = "https://cran.r-project.org"))
+#install.packages("caret")
+#install.packages("ggcorrplot")
+#install.packages("corrr")
+#install.packages("ggplot2")
+#install.packages("corrplot")
+#install.packages("factoextra")
+#install.packages("FactoMineR")
+library("FactoMineR")
+library(corrplot)
+library(ggplot2)
+library('corrr')
+library(ggcorrplot)
+library(caret)
+library("factoextra")
+```
+# 1. (5p) Please find your original dataset or datasets; and describe your data in the first step.
+
+```{r}
+rawData <- read.csv("nba.csv")
+set.seed(123)
+```
+# 2. (4p) Use “Exploratory data analysis”. Write down your comments.
+
+```{r}
+head(rawData)
+summary(rawData)
+```
+# 3. (4p) Use some “visualization techniques” and talk about your data further.
+```{r}
+ggplot(rawData, aes(x=PTS)) + geom_histogram()
+ggplot(rawData, aes(x=MIN, y=PTS)) + geom_point()
+ggplot(rawData, aes(x=factor(TARGET_5Yrs))) + geom_bar()
+```
+# KNN FOR NA VALUES
+```{r}
+data <- rawData[, -which(names(rawData) == "Name")]
+sum(is.na(data))
+preProcess_missingdata_model <- preProcess(data, method='knnImpute')
+preProcess_missingdata_model
+data <- predict(preProcess_missingdata_model, newdata = data)
+sum(is.na(data))
+data$TARGET_5Yrs <- ifelse(data$TARGET_5Yrs < 0, 0,
+                                   ifelse(data$TARGET_5Yrs > 0, 1,
+                                          data$TARGET_5Yrs))
+```
+# (4p) Check your data for multicollinearity, make your comments.
+```{r}
+independent_vars <- data[, names(data) != "TARGET_5Yrs"]
+data_scaled <- scale(independent_vars)
+data_scaled <- data.frame(data_scaled, target = data$TARGET_5Yrs)
+
+cor_matrix <- cor(data_scaled)
+corrplot(cor_matrix)
+```
+# PCA:
+```{r}
+pca_result <- princomp(data_scaled, cor = TRUE)
+summary(pca_result)
+fviz_eig(pca_result, addlabels = TRUE)
+fviz_pca_var(pca_result, col.var = "black")
+pcadata <- pca_result$scores[,1:5]
+pcadata  <- as.data.frame(pcadata)
+pcadata$target <- data_scaled$target
+```
+# LOG REG ORIGINAL:
+```{r}
+ind<-sample(2,nrow(data_scaled),replace=T,prob = c(0.7,0.3))
+train<-data_scaled[ind==1,]
+test<-data_scaled[ind==2,]
+fit<-glm(target~.,family=binomial,train)
+train$probs<-predict(fit, type = 'response')
+train$predict<-rep('0',945)
+train$predict[train$probs>0.5]<-"1"
+table(train$predict,train$target)
+confusionMatrix(as.factor(train$predict), as.factor(train$target))
+
+fit<-glm(target~.,family=binomial,test)
+test$probs<-predict(fit, type = 'response')
+test$predict<-rep('0',395)
+test$predict[test$probs>0.5]<-"1"
+table(test$predict,test$target)
+confusionMatrix(as.factor(test$predict), as.factor(test$target))
+```
+# LOG REG WITH PCA:
+```{r}
+ind<-sample(2,nrow(pcadata),replace=T,prob = c(0.7,0.3))
+train_pca<-pcadata[ind==1,]
+test_pca<-pcadata[ind==2,]
+fit_pca<-glm(target~.,family=binomial,train_pca)
+train_pca$probs<-predict(fit_pca, type = 'response')
+train_pca$predict<-rep('0',945)
+train_pca$predict[train_pca$probs>0.5]<-"1"
+table(train_pca$predict,train_pca$target)
+confusionMatrix(as.factor(train_pca$predict), as.factor(train_pca$target))
+
+test_pca$prob<-predict(fit_pca,newdata = test_pca, type = 'response')
+test_pca$predict<-rep('0',395)
+test_pca$predict[test_pca$prob>0.5]<-"1"
+table(test_pca$predict,test_pca$target)
+confusionMatrix(as.factor(test_pca$predict), as.factor(test_pca$target))
+```
+# HIERARCHICAL CLUSTERING
+```{r}
+data_scaled <- scale(pcadata[, -which(names(pcadata) == "target")])
+dist_matrix <- dist(data_scaled, method = "euclidean")
+hc <- hclust(dist_matrix, method = "ward.D2")
+plot(hc)
+cut_height <- 10
+clusters <- cutree(hc, h = cut_height)
+table(clusters)
+data_with_clusters <- cbind(pcadata, Cluster = clusters)
+
+for(i in unique(data_with_clusters$Cluster)){
+    cat("Cluster", i)
+    cluster_table <- table(data_with_clusters[data_with_clusters$Cluster == i, "target"])
+    cluster_percent <- prop.table(cluster_table) * 100  
+    print(cluster_table)
+    print(cluster_percent)
+    cat("\n")
+}
+
+
+```
+# K-MEANS CLUSTERING
+```{r}
+data_scaled <- scale(pcadata[, -which(names(pcadata) == "target")])
+wss <- (nrow(data_scaled)-1)*sum(apply(data_scaled,2,var))
+for (i in 2:15) {
+     wss[i] <- sum(kmeans(data_scaled, centers=i)$withinss)
+}
+plot(1:15, wss, type="b")
+set.seed(123)
+kmeans_result <- kmeans(data_scaled, centers=8)
+table(kmeans_result$cluster, pcadata$target)
+```
+
+```{r}
+
+```
